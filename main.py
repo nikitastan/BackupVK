@@ -110,8 +110,10 @@ class YaUploader:
                 requests.post(url=url, params=params, headers=self._headers())
             json_data['photos'] += [self.json_photo_dict(photo_name, self.vk_photo_list[photo][2])]
             counter += 1
-        with open(self.vk_id + '.json', 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, ensure_ascii=False, indent=4)
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
+        with open('logs/' + self.vk_id + '_yandex.json', 'w', encoding='utf-8') as logfile:
+            json.dump(json_data, logfile, ensure_ascii=False, indent=4)
         return
 
 
@@ -198,6 +200,11 @@ class GoogleUploader:
 
         return upload_folder_id
 
+    def json_photo_dict(self, photo_name, photo_size):
+         json_photo = {"file_name": photo_name,
+                       "size": photo_size}
+         return json_photo
+
     def google_upload(self):
         counter = 0
         json_data = {'photos': [],
@@ -221,21 +228,26 @@ class GoogleUploader:
                          "file": response_photo}
                 response = requests.post(url=url, headers=headers,
                                          files=files)
+                json_data['photos'] += [self.json_photo_dict(photo_name, self.vk_photo_list[photo][2])]
             counter += 1
-        with open(self.vk_id + '_google.json', 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, ensure_ascii=False, indent=4)
+
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
+        with open('logs/' + self.vk_id + '_google.json', 'w', encoding='utf-8') as logfile:
+            json.dump(json_data, logfile, ensure_ascii=False, indent=4)
         return
 
 
 if __name__ == '__main__':
+
     config = configparser.ConfigParser()
     config.read("config.ini")
 
     vk_access_token = config["VK"]["access_token"]
-    VK_user_id_to_upload = 'id1'  # ID пользователя VK который неоюходимо скачать
-    vk = VK(vk_access_token, VK_user_id_to_upload)
+    VK_user_id_to_upload = input('Введите ID пользователя VK: ')  # ID пользователя VK который неоюходимо скачать
+    yandex_token = input('Введите токен Яндекса: ')
 
-    yandex_token = config["Yandex"]["access_token"]
+    vk = VK(vk_access_token, VK_user_id_to_upload)
     ya = YaUploader(yandex_token, vk, num_photo=5)
     ggl = GoogleUploader(vk, num_photo=5)
 
